@@ -1,43 +1,79 @@
 <?php
 // conect
-function conectar() {
-    $sql = "";
-    $username = "rb";
-    $password = "admin";
+function conectar() : object {
+    $bd = "rb";
+    $username = "root";
+    $password = "";
+    $conect = new PDO ("mysql:host=localhost;dbname=$bd",$username, $password);
+    return $conect;
+}
+// excluir
+function excluirPessoa(object $conexao, int $id): bool {
+    
+    $sql = "DELETE FROM pessoa WHERE idPessoa = :id";
+    $stmt = $conexao->prepare($sql);
+    $stmt->bindParam(":id", $id, PDO::PARAM_INT);
+    // return $stmt -> execute();
+    if($stmt->execute()){
+        return true;
+    }else{
+        return false;
+    }
+}
+// pessoa nome pesquisado
+function listarPorNomePesquisado(object $conexao, String $nome): void{
+    $sql = "SELECT * FROM pessoa WHERE nome LIKE :nome";
+    $stmt = $conexao->prepare($sql);
+    // No bindParam() o argumento esperado é uma referência (variável ou constante) 
+    // e não pode ser um tipo primitivo como uma string ou número solto,
+    //  retorno de função/método. Já bindValue() pode receber referências e valores como argumento.
+    $stmt->bindValue(":nome", "%$nome%", PDO::PARAM_STR);
+    $stmt->execute();
+    return;
 }
 
 // listar pessoas
-function listarPessoas($conexao) {
-    $sql = "SELECT * FROM pessoas";
-    $stmt = $conexao->prepare($sql);    $stmt->execute();
-
-}
-
-// excluir
-function excluirPessoa($conexao, $id) {
-    $sql = "DELETE FROM pessoas WHERE id = :id";
+function  listarPessoas(object $conexao) : void {
+    $sql = "SELECT * FROM pessoa";
     $stmt = $conexao->prepare($sql);
-    $stmt->bindParam(":id", $id, PDO::PARAM_INT);
-    return $stmt -> execute();
+    if($stmt->execute()){
+        echo "<table border='1'>";
+        echo "<th>ID</th><th>Nome</th><th>Sobrenome</th><th>Rua</th><th>Número</th><th>Idade</th>";
+    
+        while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+            // echo print_r($row);
+            echo "<tr>";
+            echo "<td>".$row['idPessoa']."</td>";
+            echo "<td>".$row['nome']."</td>";
+            echo "<td>".$row['sobrenome']."</td>";
+            echo "<td>".$row['rua']."</td>";
+            echo "<td>".$row['numero']."</td>";
+            echo "<td>".$row['idade']."</td>";
+            echo "</tr>";
+        }
+    
+        echo "</table>";
+    }else{
+        echo "erro!";
+    }
+    return;
 }
-function inserirPessoa($conexao, $nome, $sobrenome, $rua, $numero, $idade) {
-    $sql = "INSERT INTO pessoas (nome, sobrenome, rua, numero, idade) VALUES (:nome, :sobrenome, :rua, :numero, :idade)";
+function inserirPessoa(object $conexao, String $nome, String $sobrenome, String $rua, int $numero, int $idade):bool {
+    $sql = "INSERT INTO pessoa (nome, sobrenome, rua, numero, idade) VALUES(?,?,?,?,?)";
     $stmt = $conexao->prepare($sql);
-    $stmt->bindParam(":nome", $nome, PDO::PARAM_STR);
-    $stmt->bindParam(":sobrenome", $sobrenome, PDO::PARAM_STR);
-    $stmt->bindParam(":rua", $rua, PDO::PARAM_STR);
-    $stmt->bindParam(":numero", $numero, PDO::PARAM_INT);
-    $stmt->bindParam(":idade", $idade, PDO::PARAM_INT);
-    return $stmt->execute();
+    $stmt->bindParam(1,$nome,PDO::PARAM_STR);
+    $stmt->bindParam(2,$sobrenome,PDO::PARAM_STR);
+    $stmt->bindParam(3,$rua,PDO::PARAM_STR);
+    $stmt->bindParam(4,$numero,PDO::PARAM_INT);
+    $stmt->bindParam(5,$idade,PDO::PARAM_INT);
+    if($stmt->execute()){
+        return true;
+    }else{
+        return false;
+    }
 }
 
-// pessoa nome pesquisado
-function listarPorNomePesquisado($conexao, $aux) {
-    $sql = "SELECT * FROM pessoas WHERE nome LIKE :aux";
-    $stmt = $conexao->prepare($sql);
-    $stmt->bindValue(":aux", "%$aux%", PDO::PARAM_STR);
-    $stmt->execute();
-}
+
 
 // maiores de idade
 function listarPessoasMaioresIdade($conexao) {
